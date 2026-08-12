@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="A distraction-free coding interview practice workspace with a timer, code editor, and narration notes." />
+<meta name="theme-color" content="#F7F4EC" />
+<title>Drill Room - Coding Interview Practice</title>
+<style>
+  :root{
+    --paper:#F7F4EC;
+    --paper-edge:#EFEAD9;
+    --ink:#272420;
+    --ink-soft:#8C8473;
+    --line-num:#C9C0AC;
+    --rule-red:#C97A6B;
+    --accent:#2B5D8C;
+    --accent-soft:#DCE8F2;
+    --amber:#B9842E;
+    --amber-soft:#F6EBD9;
+    --warn:#BD4B2C;
+    --warn-soft:#F8E1D8;
+    --border:#DCD5C4;
+    --syn-string:#6E7A3D;
+    --syn-builtin:#3E7A85;
+    --font-display:Georgia,'Times New Roman',serif;
+    --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,'SF Mono','Cascadia Mono','Roboto Mono',Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-ui);
+    min-height:100vh;
+  }
+  .app{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding:18px;
+    max-width:1100px;
+    margin:0 auto;
+    min-height:100vh;
+  }
+
+  /* ---- toolbar ---- */
+  .toolbar{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:18px;
+    flex-wrap:wrap;
+    border-bottom:1px solid var(--border);
+    padding-bottom:12px;
+  }
+  .brand h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:24px;
+    letter-spacing:0.01em;
+    margin:0;
+  }
+  .brand p{
+    margin:4px 0 0;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .session-field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    flex:1;
+    min-width:180px;
+    max-width:320px;
+  }
+  .session-field label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+  }
+  .session-field input{
+    font-family:var(--font-ui);
+    font-size:13px;
+    padding:6px 9px;
+    border:1px solid var(--border);
+    border-radius:5px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .session-field input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent);}
+
+  .timer-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  select#duration{
+    font-family:var(--font-ui);
+    font-size:12px;
+    padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:5px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .btn{
+    font-family:var(--font-ui);
+    font-size:12px;
+    padding:6px 12px;
+    border-radius:5px;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .btn:hover{background:var(--paper-edge);}
+  .btn:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .btn-accent{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn-accent:hover{background:#244e76;}
+  .btn-ghost{
+    background:transparent;
+    border-color:transparent;
+    color:var(--ink-soft);
+  }
+  .btn-ghost:hover{color:var(--ink);background:var(--paper-edge);}
+  .btn-warn{
+    background:var(--warn-soft);
+    border-color:var(--warn);
+    color:var(--warn);
+  }
+
+  .ring-wrap{
+    position:relative;
+    width:54px;
+    height:54px;
+    flex-shrink:0;
+  }
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-bg{fill:none;stroke:var(--border);stroke-width:4;}
+  .ring-progress{
+    fill:none;
+    stroke:var(--accent);
+    stroke-width:4;
+    stroke-linecap:round;
+    transition:stroke-dashoffset .25s linear, stroke .3s;
+  }
+  .ring-progress.amber{stroke:var(--amber);}
+  .ring-progress.warn{stroke:var(--warn);}
+  .ring-time{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--ink);
+  }
+  .ring-time.amber{color:var(--amber);}
+  .ring-time.warn{color:var(--warn);}
+  .ring-wrap.pulse{animation:pulse 1s ease-in-out 3;}
+  @keyframes pulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.08);}
+  }
+
+  /* ---- panes ---- */
+  .panes{
+    display:flex;
+    gap:14px;
+    flex:1;
+    min-height:420px;
+  }
+  .pane{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .pane-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .pane-label .hint{
+    text-transform:none;
+    letter-spacing:normal;
+    color:var(--ink-soft);
+    font-weight:400;
+  }
+
+  .editor-wrap{
+    flex:1;
+    display:flex;
+    border:1px solid var(--border);
+    border-radius:6px;
+    background:#fff;
+    overflow:hidden;
+  }
+  .line-numbers{
+    padding:12px 10px 12px 14px;
+    text-align:right;
+    font-family:var(--font-mono);
+    font-size:13px;
+    line-height:1.65;
+    color:var(--line-num);
+    background:var(--paper-edge);
+    border-right:2px solid var(--rule-red);
+    user-select:none;
+    overflow:hidden;
+    white-space:pre;
+  }
+  .code-surface{
+    position:relative;
+    flex:1;
+    min-width:0;
+    overflow:auto;
+  }
+  .code-area{
+    min-height:100%;
+    margin:0;
+    padding:12px 14px;
+    font-family:var(--font-mono);
+    font-size:13px;
+    line-height:1.65;
+    white-space:pre-wrap;
+    word-break:break-word;
+    tab-size:4;
+    color:var(--ink);
+    background:#fff;
+    outline:none;
+    caret-color:var(--ink);
+  }
+  .code-area:empty::before{
+    content:attr(data-placeholder);
+    color:var(--ink-soft);
+    white-space:pre-wrap;
+  }
+  .code-area::selection,
+  .code-area *::selection{
+    background:rgba(43,93,140,.18);
+  }
+
+  /* ---- syntax tokens ---- */
+  .tok-kw{color:var(--accent);font-weight:600;}
+  .tok-def{color:var(--rule-red);font-weight:600;}
+  .tok-str{color:var(--syn-string);}
+  .tok-com{color:var(--ink-soft);font-style:italic;}
+  .tok-num{color:var(--amber);}
+  .tok-dec{color:var(--warn);}
+  .tok-self{color:var(--ink-soft);font-style:italic;}
+  .tok-bi{color:var(--syn-builtin);}
+
+  .notes-area{
+    flex:1;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:12px 14px;
+    font-family:var(--font-mono);
+    font-size:13px;
+    line-height:1.65;
+    color:var(--ink);
+    background:#fff;
+    resize:none;
+    outline:none;
+  }
+  .notes-area:focus, .code-area:focus{
+    box-shadow:inset 0 0 0 2px var(--accent-soft);
+  }
+
+  /* ---- footer ---- */
+  .footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    border-top:1px solid var(--border);
+    padding-top:12px;
+  }
+  .footer-left, .footer-right{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .sound-toggle{
+    font-size:12px;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .footer-link{
+    font-size:12px;
+    color:var(--ink-soft);
+    text-decoration:none;
+  }
+  .footer-link:hover{color:var(--accent);text-decoration:underline;}
+  .save-status{
+    min-width:44px;
+    font-size:12px;
+    color:var(--accent);
+  }
+  .save-status[data-state="error"]{color:var(--warn);}
+
+  .banner{
+    text-align:center;
+    font-size:13px;
+    padding:8px 12px;
+    border-radius:5px;
+    background:var(--warn-soft);
+    color:var(--warn);
+    border:1px solid var(--warn);
+    cursor:pointer;
+  }
+
+  @media (max-width:760px){
+    .panes{flex-direction:column;min-height:0;}
+    .pane{min-height:240px;}
+    .toolbar{align-items:stretch;}
+    .session-field{max-width:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="toolbar">
+    <div class="brand">
+      <h1>Drill Room</h1>
+      <p>No autocomplete. No linting. No execution. Tab indents, Enter continues indentation.</p>
+    </div>
+
+    <div class="session-field">
+      <label for="problem">Problem</label>
+      <input id="problem" type="text" placeholder="e.g. LRU Cache (LC 146)" />
+    </div>
+
+    <div class="timer-controls">
+      <select id="duration" aria-label="Timer duration">
+        <option value="15">15 min</option>
+        <option value="25" selected>25 min</option>
+        <option value="45">45 min</option>
+        <option value="60">60 min</option>
+      </select>
+      <button id="startPause" class="btn btn-accent">Start</button>
+      <button id="resetTimer" class="btn">Reset</button>
+      <div class="ring-wrap" id="ringWrap">
+        <svg width="54" height="54" viewBox="0 0 54 54">
+          <circle class="ring-bg" cx="27" cy="27" r="23"></circle>
+          <circle class="ring-progress" id="ringProgress" cx="27" cy="27" r="23"></circle>
+        </svg>
+        <span class="ring-time" id="timeDisplay">25:00</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden role="status">Time's up &mdash; wrap up your answer. (tap to dismiss)</div>
+
+  <main class="panes">
+    <section class="pane">
+      <div class="pane-label">Solution</div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="lineNumbers" aria-hidden="true">1</div>
+        <div class="code-surface">
+          <div id="code" class="code-area" contenteditable="true" spellcheck="false" autocapitalize="off" autocorrect="off" data-placeholder="# Write your Python solution here.&#10;# Start with class/method signatures and docstrings."></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane">
+      <div class="pane-label">Narration notes <span class="hint">&mdash; edge cases, complexity, production framing</span></div>
+      <textarea id="notes" class="notes-area" spellcheck="false" placeholder="- edge cases: ...&#10;- time/space complexity: O(...)&#10;- production angle: ..."></textarea>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <button id="copyCode" class="btn">Copy code</button>
+      <button id="copyAll" class="btn btn-accent">Copy session</button>
+    </div>
+    <div class="footer-right">
+      <span id="saveStatus" class="save-status" role="status" aria-live="polite"></span>
+      <a class="footer-link" href="https://github.com/evoltriet/drill-room" target="_blank" rel="noreferrer">GitHub</a>
+      <label class="sound-toggle"><input type="checkbox" id="sound" checked /> Sound at time's up</label>
+      <button id="newSession" class="btn btn-ghost">New session</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var codeArea = document.getElementById('code');
+  var notesArea = document.getElementById('notes');
+  var lineNumbers = document.getElementById('lineNumbers');
+  var problemInput = document.getElementById('problem');
+  var durationSelect = document.getElementById('duration');
+  var startPauseBtn = document.getElementById('startPause');
+  var resetTimerBtn = document.getElementById('resetTimer');
+  var saveStatus = document.getElementById('saveStatus');
+  var INDENT = '    ';
+  var INDENT_WIDTH = INDENT.length;
+  var STORAGE_KEY = 'drill-room.session.v1';
+  var MAX_EDITOR_HISTORY = 200;
+  var editorHistory = [];
+  var editorHistoryIndex = -1;
+  var restoringEditorHistory = false;
+  var saveStatusTimer = null;
+
+  /* ---- contenteditable plain-text helpers ----
+     codeArea is a single contenteditable surface that holds BOTH the
+     editable text and the syntax-highlight spans in the same DOM nodes
+     (no second overlay layer), so the caret can never visually drift
+     from the text - there is only one element doing layout. */
+
+  function getCaretOffset(el){
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return el.textContent.length;
+    var range = sel.getRangeAt(0);
+    if (!el.contains(range.startContainer)) return el.textContent.length;
+    var pre = range.cloneRange();
+    pre.selectNodeContents(el);
+    pre.setEnd(range.startContainer, range.startOffset);
+    return pre.toString().length;
+  }
+
+  // Returns {start, end} character offsets of the current selection,
+  // analogous to a textarea's selectionStart/selectionEnd.
+  function getSelectionOffsets(el){
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+      var len = el.textContent.length;
+      return { start: len, end: len };
+    }
+    var range = sel.getRangeAt(0);
+    if (!el.contains(range.startContainer) || !el.contains(range.endContainer)) {
+      var len2 = el.textContent.length;
+      return { start: len2, end: len2 };
+    }
+    var preStart = range.cloneRange();
+    preStart.selectNodeContents(el);
+    preStart.setEnd(range.startContainer, range.startOffset);
+    var startOffset = preStart.toString().length;
+
+    var preEnd = range.cloneRange();
+    preEnd.selectNodeContents(el);
+    preEnd.setEnd(range.endContainer, range.endOffset);
+    var endOffset = preEnd.toString().length;
+
+    return { start: startOffset, end: endOffset };
+  }
+
+  // Sets a non-collapsed selection by character offsets.
+  function setSelectionOffsets(el, start, end){
+    var sel = window.getSelection();
+    var range = document.createRange();
+
+    function findNode(target){
+      var result = null;
+      var remaining = target;
+      function walk(n){
+        if (result) return;
+        if (n.nodeType === 3) {
+          var len = n.textContent.length;
+          if (remaining <= len) {
+            result = { node: n, offset: remaining };
+          } else {
+            remaining -= len;
+          }
+        } else {
+          for (var i = 0; i < n.childNodes.length; i++) {
+            walk(n.childNodes[i]);
+            if (result) return;
+          }
+        }
+      }
+      walk(el);
+      return result;
+    }
+
+    var startPos = findNode(start);
+    var endPos = findNode(end);
+    if (!startPos || !endPos) {
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+    range.setStart(startPos.node, startPos.offset);
+    range.setEnd(endPos.node, endPos.offset);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function setCaretOffset(el, offset){
+    var sel = window.getSelection();
+    var range = document.createRange();
+    var node = el;
+    var remaining = offset;
+    var found = false;
+
+    function walk(n){
+      if (found) return;
+      if (n.nodeType === 3) {
+        var len = n.textContent.length;
+        if (remaining <= len) {
+          range.setStart(n, remaining);
+          range.collapse(true);
+          found = true;
+        } else {
+          remaining -= len;
+        }
+      } else {
+        for (var i = 0; i < n.childNodes.length; i++) {
+          walk(n.childNodes[i]);
+          if (found) return;
+        }
+      }
+    }
+    walk(el);
+    if (!found) {
+      range.selectNodeContents(el);
+      range.collapse(false);
+    }
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function getText(el){
+    // textContent already gives the right plain text since we only ever
+    // insert text nodes and <span> wrappers (no <br> or <div> children).
+    return el.textContent;
+  }
+
+  function setText(el, text, caretOffset){
+    el.innerHTML = highlightPython(text);
+    if (typeof caretOffset === 'number') setCaretOffset(el, caretOffset);
+  }
+
+  function snapshotEditor(){
+    var sel = getSelectionOffsets(codeArea);
+    return {
+      text: getText(codeArea),
+      start: sel.start,
+      end: sel.end
+    };
+  }
+
+  function pushEditorHistory(){
+    if (restoringEditorHistory) return;
+    var snap = snapshotEditor();
+    var prev = editorHistory[editorHistoryIndex];
+    if (prev && prev.text === snap.text) {
+      prev.start = snap.start;
+      prev.end = snap.end;
+      return;
+    }
+    editorHistory = editorHistory.slice(0, editorHistoryIndex + 1);
+    editorHistory.push(snap);
+    if (editorHistory.length > MAX_EDITOR_HISTORY) editorHistory.shift();
+    editorHistoryIndex = editorHistory.length - 1;
+  }
+
+  function resetEditorHistory(){
+    editorHistory = [];
+    editorHistoryIndex = -1;
+    pushEditorHistory();
+  }
+
+  function restoreEditorHistory(delta){
+    var nextIndex = editorHistoryIndex + delta;
+    if (nextIndex < 0 || nextIndex >= editorHistory.length) return;
+    editorHistoryIndex = nextIndex;
+    var snap = editorHistory[editorHistoryIndex];
+    restoringEditorHistory = true;
+    setText(codeArea, snap.text);
+    setSelectionOffsets(codeArea, snap.start, snap.end);
+    updateLineNumbers();
+    restoringEditorHistory = false;
+    scheduleSave();
+  }
+
+  function applyCodeEdit(text, start, end){
+    setText(codeArea, text);
+    setSelectionOffsets(codeArea, start, typeof end === 'number' ? end : start);
+    updateLineNumbers();
+    pushEditorHistory();
+    scheduleSave();
+  }
+
+  function isUndoShortcut(e){
+    return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'z';
+  }
+
+  function isRedoShortcut(e){
+    return (e.ctrlKey || e.metaKey) && !e.altKey &&
+      (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'));
+  }
+
+  function isSaveShortcut(e){
+    return (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's';
+  }
+  var ringProgress = document.getElementById('ringProgress');
+  var ringWrap = document.getElementById('ringWrap');
+  var timeDisplay = document.getElementById('timeDisplay');
+  var copyCodeBtn = document.getElementById('copyCode');
+  var copyAllBtn = document.getElementById('copyAll');
+  var newSessionBtn = document.getElementById('newSession');
+  var soundCheckbox = document.getElementById('sound');
+  var banner = document.getElementById('banner');
+
+  var R = 23;
+  var CIRC = 2 * Math.PI * R;
+  ringProgress.style.strokeDasharray = CIRC.toFixed(2);
+
+  var totalSeconds = parseInt(durationSelect.value, 10) * 60;
+  var remaining = totalSeconds;
+  var timerInterval = null;
+  var running = false;
+
+  function formatTime(s){
+    s = Math.max(0, Math.round(s));
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' + m : m) + ':' + (sec < 10 ? '0' + sec : sec);
+  }
+
+  function updateRing(){
+    var pct = totalSeconds > 0 ? remaining / totalSeconds : 0;
+    ringProgress.style.strokeDashoffset = (CIRC * (1 - pct)).toFixed(2);
+    ringProgress.classList.remove('amber', 'warn');
+    timeDisplay.classList.remove('amber', 'warn');
+    if (remaining <= 60) {
+      ringProgress.classList.add('warn');
+      timeDisplay.classList.add('warn');
+    } else if (remaining <= 300) {
+      ringProgress.classList.add('amber');
+      timeDisplay.classList.add('amber');
+    }
+    timeDisplay.textContent = formatTime(remaining);
+  }
+
+  function beep(){
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.value = 0.15;
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+      setTimeout(function(){ ctx.close(); }, 600);
+    } catch (e) {}
+  }
+
+  function tick(){
+    remaining -= 1;
+    if (remaining <= 0) {
+      remaining = 0;
+      updateRing();
+      stopTimer();
+      onTimeUp();
+      return;
+    }
+    updateRing();
+  }
+
+  function startTimer(){
+    if (running) return;
+    if (remaining <= 0) remaining = totalSeconds;
+    running = true;
+    startPauseBtn.textContent = 'Pause';
+    hideBanner();
+    timerInterval = setInterval(tick, 1000);
+  }
+
+  function stopTimer(){
+    running = false;
+    startPauseBtn.textContent = 'Start';
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  }
+
+  function resetTimerToSelected(){
+    stopTimer();
+    totalSeconds = parseInt(durationSelect.value, 10) * 60;
+    remaining = totalSeconds;
+    updateRing();
+    hideBanner();
+    ringWrap.classList.remove('pulse');
+  }
+
+  function onTimeUp(){
+    banner.hidden = false;
+    ringWrap.classList.add('pulse');
+    setTimeout(function(){ ringWrap.classList.remove('pulse'); }, 3000);
+    if (soundCheckbox.checked) beep();
+  }
+
+  function hideBanner(){ banner.hidden = true; }
+  banner.addEventListener('click', hideBanner);
+
+  startPauseBtn.addEventListener('click', function(){
+    if (running) stopTimer(); else startTimer();
+  });
+  resetTimerBtn.addEventListener('click', resetTimerToSelected);
+  durationSelect.addEventListener('change', function(){
+    resetTimerToSelected();
+    scheduleSave();
+  });
+
+  /* ---- syntax highlighting (overlay technique) ---- */
+  var PY_TOKEN_RE = /(#.*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(@[A-Za-z_][\w.]*)|\b(def|class)(\s+)([A-Za-z_]\w*)|(\b(?:False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield)\b)|(\bself\b|\bcls\b)|(\b(?:print|len|range|int|str|float|list|dict|set|tuple|bool|type|isinstance|enumerate|zip|map|filter|sorted|reversed|sum|min|max|abs|round|open|super|repr|hash|getattr|setattr|hasattr|iter|next|all|any|format)\b)/g;
+
+  function escapeHtml(s){
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightPython(src){
+    var escaped = escapeHtml(src);
+    return escaped.replace(PY_TOKEN_RE, function(m, comment, str, num, dec, defcls, ws, name, kw, selfcls, builtin){
+      if (comment !== undefined) return '<span class="tok-com">' + comment + '</span>';
+      if (str !== undefined) return '<span class="tok-str">' + str + '</span>';
+      if (num !== undefined) return '<span class="tok-num">' + num + '</span>';
+      if (dec !== undefined) return '<span class="tok-dec">' + dec + '</span>';
+      if (defcls !== undefined) return '<span class="tok-kw">' + defcls + '</span>' + ws + '<span class="tok-def">' + name + '</span>';
+      if (kw !== undefined) return '<span class="tok-kw">' + kw + '</span>';
+      if (selfcls !== undefined) return '<span class="tok-self">' + selfcls + '</span>';
+      if (builtin !== undefined) return '<span class="tok-bi">' + builtin + '</span>';
+      return m;
+    });
+  }
+
+  /* ---- line numbers ---- */
+  function updateLineNumbers(){
+    var lines = getText(codeArea).split('\n').length;
+    var out = [];
+    for (var i = 1; i <= lines; i++) out.push(i);
+    lineNumbers.textContent = out.join('\n');
+  }
+
+  // Re-highlight on every input, preserving caret position by character
+  // offset (not by DOM node, since innerHTML gets fully replaced).
+  codeArea.addEventListener('input', function(){
+    var sel = getSelectionOffsets(codeArea);
+    var text = getText(codeArea);
+    setText(codeArea, text);
+    setSelectionOffsets(codeArea, sel.start, sel.end);
+    updateLineNumbers();
+    pushEditorHistory();
+    scheduleSave();
+  });
+  codeArea.addEventListener('scroll', function(){
+    lineNumbers.scrollTop = codeArea.scrollTop;
+  });
+  // contenteditable can accept pasted HTML (e.g. from a rich text source);
+  // force plain text only so highlighting/tab logic stays predictable.
+  codeArea.addEventListener('paste', function(e){
+    e.preventDefault();
+    var pasted = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r\n?/g, '\n');
+    var sel = getSelectionOffsets(codeArea);
+    var text = getText(codeArea);
+    var newText = text.slice(0, sel.start) + pasted + text.slice(sel.end);
+    applyCodeEdit(newText, sel.start + pasted.length);
+  });
+
+  /* ---- tab indent / enter auto-indent ---- */
+  function getLineStart(value, pos){
+    var idx = value.lastIndexOf('\n', pos - 1);
+    return idx + 1;
+  }
+  function getLineEnd(value, pos){
+    var idx = value.indexOf('\n', pos);
+    return idx === -1 ? value.length : idx;
+  }
+  function getIndentColumn(value){
+    var col = 0;
+    for (var i = 0; i < value.length; i++) {
+      if (value.charAt(i) === '\t') {
+        var mod = col % INDENT_WIDTH;
+        col += mod === 0 ? INDENT_WIDTH : INDENT_WIDTH - mod;
+      } else {
+        col += 1;
+      }
+    }
+    return col;
+  }
+  function getIndentDeleteCount(prefix){
+    if (!prefix || !/^[ \t]+$/.test(prefix)) return 0;
+    if (prefix.charAt(prefix.length - 1) === '\t') return 1;
+    var spaces = prefix.match(/ +$/);
+    if (!spaces) return 0;
+    var col = getIndentColumn(prefix);
+    var target = Math.max(0, col - (col % INDENT_WIDTH || INDENT_WIDTH));
+    return Math.min(spaces[0].length, Math.max(1, col - target));
+  }
+
+  codeArea.addEventListener('keydown', function(e){
+    var value = getText(codeArea);
+    var sel = getSelectionOffsets(codeArea);
+    var start = sel.start;
+    var end = sel.end;
+
+    if (isUndoShortcut(e)) {
+      e.preventDefault();
+      restoreEditorHistory(-1);
+      return;
+    }
+
+    if (isRedoShortcut(e)) {
+      e.preventDefault();
+      restoreEditorHistory(1);
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (start === end) {
+        var newText = value.slice(0, start) + INDENT + value.slice(end);
+        applyCodeEdit(newText, start + INDENT.length);
+      } else {
+        var blockStart = getLineStart(value, start);
+        var blockEnd = getLineEnd(value, end);
+        var block = value.slice(blockStart, blockEnd);
+        var lines = block.split('\n');
+        var delta = 0, firstDelta = 0;
+        for (var i = 0; i < lines.length; i++) {
+          if (e.shiftKey) {
+            var m = lines[i].match(/^(?:\t| {1,4})/);
+            var rem = m ? m[0].length : 0;
+            lines[i] = lines[i].slice(rem);
+            if (i === 0) firstDelta = -rem;
+            delta -= rem;
+          } else {
+            lines[i] = INDENT + lines[i];
+            if (i === 0) firstDelta = INDENT.length;
+            delta += INDENT.length;
+          }
+        }
+        var newBlock = lines.join('\n');
+        var newFullText = value.slice(0, blockStart) + newBlock + value.slice(blockEnd);
+        var newStart = Math.max(blockStart, start + firstDelta);
+        var newEnd = end + delta;
+        applyCodeEdit(newFullText, newStart, newEnd);
+      }
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      var lineStart = getLineStart(value, start);
+      var currentLine = value.slice(lineStart, start);
+      var indentMatch = currentLine.match(/^[ \t]*/);
+      var indent = indentMatch ? indentMatch[0] : '';
+      if (/:\s*$/.test(currentLine.trim())) indent += INDENT;
+      var insert = '\n' + indent;
+      var newText2 = value.slice(0, start) + insert + value.slice(end);
+      applyCodeEdit(newText2, start + insert.length);
+      return;
+    }
+
+    if (e.key === 'Backspace' && start !== end) {
+      e.preventDefault();
+      applyCodeEdit(value.slice(0, start) + value.slice(end), start);
+      return;
+    }
+
+    if (e.key === 'Backspace' && start === end) {
+      var currentLineStart = getLineStart(value, start);
+      var beforeCaret = value.slice(currentLineStart, start);
+      var remove = getIndentDeleteCount(beforeCaret);
+      if (remove > 0) {
+        e.preventDefault();
+        var nextText = value.slice(0, start - remove) + value.slice(end);
+        applyCodeEdit(nextText, start - remove);
+      }
+      return;
+    }
+  });
+
+  notesArea.addEventListener('input', scheduleSave);
+  problemInput.addEventListener('input', scheduleSave);
+  soundCheckbox.addEventListener('change', scheduleSave);
+  document.addEventListener('keydown', function(e){
+    if (!isSaveShortcut(e)) return;
+    e.preventDefault();
+    saveSession(true);
+  }, true);
+
+  /* ---- copy ---- */
+  function copyText(text, btn){
+    var orig = btn.textContent;
+    function ok(){ btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = orig; }, 1800); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); ok(); }
+      catch (err) { btn.textContent = 'Copy failed'; setTimeout(function(){ btn.textContent = orig; }, 1800); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  copyCodeBtn.addEventListener('click', function(){
+    copyText(getText(codeArea), copyCodeBtn);
+  });
+
+  function numberLines(code){
+    var lines = code.split('\n');
+    var width = String(lines.length).length;
+    return lines.map(function(line, i){
+      var num = String(i + 1);
+      while (num.length < width) num = ' ' + num;
+      return num + '  ' + line;
+    }).join('\n');
+  }
+
+  copyAllBtn.addEventListener('click', function(){
+    var problem = problemInput.value.trim() || 'Untitled drill';
+    var elapsed = totalSeconds - remaining;
+    var text = 'Problem: ' + problem + '\n' +
+      'Time used: ' + formatTime(elapsed) + ' / ' + formatTime(totalSeconds) + '\n\n' +
+      'Code (line numbers added for reference - refer to these when giving feedback):\n' +
+      '```\n' + numberLines(getText(codeArea)) + '\n```\n\n' +
+      'Narration notes:\n' + (notesArea.value.trim() || '(none)');
+    copyText(text, copyAllBtn);
+  });
+
+  /* ---- new session ---- */
+  var confirming = false;
+  newSessionBtn.addEventListener('click', function(){
+    if (!confirming) {
+      confirming = true;
+      this.textContent = 'Click again to clear';
+      this.classList.add('btn-warn');
+      setTimeout(function(){
+        confirming = false;
+        newSessionBtn.textContent = 'New session';
+        newSessionBtn.classList.remove('btn-warn');
+      }, 3000);
+      return;
+    }
+    confirming = false;
+    this.textContent = 'New session';
+    this.classList.remove('btn-warn');
+    problemInput.value = '';
+    setText(codeArea, '');
+    notesArea.value = '';
+    updateLineNumbers();
+    resetEditorHistory();
+    resetTimerToSelected();
+    saveSession(true);
+  });
+
+  /* ---- persistence ---- */
+  var saveTimeout = null;
+  function scheduleSave(){
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveSession, 600);
+  }
+  function getSessionData(){
+    return {
+      problem: problemInput.value,
+      code: getText(codeArea),
+      notes: notesArea.value,
+      duration: durationSelect.value,
+      sound: soundCheckbox.checked
+    };
+  }
+  function flashSaveStatus(saved){
+    if (!saveStatus) return;
+    clearTimeout(saveStatusTimer);
+    saveStatus.dataset.state = saved ? 'saved' : 'error';
+    saveStatus.textContent = saved ? 'Saved' : 'Save unavailable';
+    saveStatusTimer = setTimeout(function(){
+      saveStatus.textContent = '';
+      saveStatus.removeAttribute('data-state');
+    }, 1600);
+  }
+  function saveSession(showStatus){
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+    var saved = false;
+    var payload;
+    try {
+      payload = JSON.stringify(getSessionData());
+    } catch (e) {
+      if (showStatus) flashSaveStatus(false);
+      return false;
+    }
+    try {
+      if (window.storage && window.storage.set) {
+        window.storage.set(STORAGE_KEY, payload, false);
+        saved = true;
+      }
+    } catch (e2) {}
+    try {
+      if (window.localStorage) {
+        window.localStorage.setItem(STORAGE_KEY, payload);
+        saved = true;
+      }
+    } catch (e3) {}
+    if (showStatus) flashSaveStatus(saved);
+    return saved;
+  }
+  function getLocalSession(){
+    try {
+      return window.localStorage ? window.localStorage.getItem(STORAGE_KEY) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function applySession(raw){
+    try {
+      if (raw) {
+        var data = JSON.parse(raw);
+        problemInput.value = data.problem || '';
+        setText(codeArea, data.code || '');
+        notesArea.value = data.notes || '';
+        if (data.duration) durationSelect.value = data.duration;
+        if (typeof data.sound === 'boolean') soundCheckbox.checked = data.sound;
+      }
+    } catch (e) {}
+    updateLineNumbers();
+    resetTimerToSelected();
+    resetEditorHistory();
+  }
+  function loadSession(){
+    function applyWithFallback(raw){
+      applySession(raw || getLocalSession());
+    }
+    try {
+      if (window.storage && window.storage.get) {
+        window.storage.get(STORAGE_KEY, false).then(function(r){
+          applyWithFallback(r && r.value);
+        }).catch(function(){
+          applyWithFallback(null);
+        });
+        return;
+      }
+    } catch (e) {
+      applyWithFallback(null);
+      return;
+    }
+    applyWithFallback(null);
+  }
+
+  /* ---- init ---- */
+  updateLineNumbers();
+  updateRing();
+  resetEditorHistory();
+  loadSession();
+})();
+</script>
+</body>
+</html>
