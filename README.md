@@ -1,34 +1,38 @@
 # Drill Room
 
-Drill Room is a distraction-free workspace for practicing coding interviews. It combines a lightweight Python editor, a configurable countdown timer, and a separate area for narrating tradeoffs, edge cases, and complexity.
+Drill Room is a distraction-free workspace for practicing coding interviews. It has two standalone pages: a lightweight no-execution editor and a browser-based Python test runner.
 
-The entire application lives in one dependency-free HTML file. Download it, open it in a modern browser, and start practicing.
+## Choose a Room
+
+- [`drill_room.html`](./drill_room.html) is the original dependency-free editor: syntax highlighting, timer, notes, and no code execution.
+- [`drill_room_compiler.html`](./drill_room_compiler.html) is a reusable Python + `unittest` runner. Its problem, description, solution, visible tests, and notes are all editable and saved locally.
 
 ## Features
 
-- Python syntax highlighting without autocomplete, linting, or execution
+- Python syntax highlighting without autocomplete, linting, or execution in the lightweight editor
+- Python standard-library `unittest` execution, structured failures, raw output, Stop, and a three-second timeout in the compiler
 - Configurable 15, 25, 45, and 60 minute sessions
 - Four-space indentation with smart Enter, Backspace, Tab, and Shift+Tab behavior
 - Undo and redo support in the highlighted editor
 - Local session persistence for the problem, code, notes, timer duration, and sound preference
 - Copy code or copy a complete, line-numbered session for review
 - Responsive layout for desktop and smaller screens
-- No dependencies, build step, account, analytics, or network requests
+- No build step, account, analytics, or backend
 
 ## Use It
 
-1. Download [`index.html`](./index.html).
+1. Download either [`drill_room.html`](./drill_room.html) or [`drill_room_compiler.html`](./drill_room_compiler.html).
 2. Open it in Chrome, Edge, Firefox, or Safari.
 3. Enter a problem name, choose a timer duration, and write your solution.
 
-You can also clone the repository and open `index.html` directly:
+You can also clone the repository and open either page directly:
 
 ```bash
 git clone https://github.com/evoltriet/drill-room.git
 cd drill-room
 ```
 
-No installation or local server is required.
+The lightweight editor never needs a network connection. The compiler downloads a pinned Pyodide runtime the first time it loads, so it needs internet access. If a browser blocks workers from a `file://` URL, run `python -m http.server` in this folder and open `http://localhost:8000/drill_room_compiler.html` instead.
 
 ## Keyboard Controls
 
@@ -46,11 +50,11 @@ Drill Room also saves automatically shortly after fields change.
 
 ## Privacy
 
-Session data stays in the browser's local storage under `drill-room.session.v1`. Drill Room has no backend and does not transmit code, notes, or problem names anywhere. Clearing site data in the browser removes the saved session.
+Session data stays in the browser's local storage under separate keys for each room. Drill Room has no backend and does not transmit code, notes, or problem names anywhere. The compiler fetches its Python runtime from jsDelivr, but your source and test data remain in the browser. Clearing site data removes saved sessions.
 
 ## Development
 
-The project intentionally avoids a framework and build pipeline. Edit `index.html`, then run the zero-dependency validation check:
+The project intentionally avoids a framework and build pipeline. Edit the relevant HTML page, then run the validation check:
 
 ```bash
 node scripts/check.mjs
