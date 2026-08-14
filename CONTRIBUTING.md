@@ -5,22 +5,22 @@ Thanks for helping make focused interview practice more useful and accessible.
 ## Before You Start
 
 - Search existing issues before opening a new one.
-- Keep the application dependency-free unless a proposal clearly justifies changing that constraint.
-- Preserve the core practice environment: no autocomplete, linting, code execution, accounts, or remote data collection.
+- Keep the lightweight editor dependency-free. The compiler may use its pinned Pyodide runtime, but should not add a build pipeline, accounts, analytics, or a backend.
+- Preserve the focused practice environment: no autocomplete or linting. The compiler supports only Python's standard library and visible `unittest` cases.
 - Keep changes focused and avoid unrelated visual or structural rewrites.
 
 ## Local Workflow
 
 1. Fork and clone the repository.
 2. Create a focused branch from `main`.
-3. Edit `index.html` and any relevant documentation.
+3. Edit `drill_room.html`, `drill_room_compiler.html`, and any relevant documentation.
 4. Run the validation check:
 
 ```bash
 node scripts/check.mjs
 ```
 
-5. Open `index.html` in a modern browser and manually test the affected behavior.
+5. Open the affected page in a modern browser and manually test it.
 
 ## Editor Test Checklist
 
@@ -32,6 +32,14 @@ node scripts/check.mjs
 - Test undo and redo after typing, pasting, indenting, and deleting a selection.
 - Enter values in the problem, code, and notes fields, press `Ctrl+S` or `Cmd+S`, reload, and confirm they return.
 - Test both wide and narrow browser windows for overlap or clipped controls.
+
+## Compiler Test Checklist
+
+- Run a passing test, assertion failure, raised exception, syntax error, import error, and printed-output example.
+- Confirm repeated runs start with fresh Python module state.
+- Confirm Stop and the three-second timeout leave the page responsive and allow a later run.
+- Confirm the problem, description, code, tests, and notes persist independently from the lightweight editor.
+- Test Tab, Shift+Tab, Enter, Backspace, undo, redo, and normal deletion in both compiler editors.
 
 ## Pull Requests
 
