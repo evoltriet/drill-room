@@ -13,7 +13,7 @@ Thanks for helping make focused interview practice more useful and accessible.
 
 1. Fork and clone the repository.
 2. Create a focused branch from `main`.
-3. Edit `drill_room.html`, `drill_room_compiler.html`, and any relevant documentation.
+3. Edit `index.html`, `drill_room_compiler.html`, and any relevant documentation.
 4. Run the validation check:
 
 ```bash

@@ -2,9 +2,14 @@
 
 Drill Room is a distraction-free workspace for practicing coding interviews. It has two standalone pages: a lightweight no-execution editor and a browser-based Python test runner.
 
+## Try It Live
+
+- [Open the lightweight editor](https://evoltriet.github.io/drill-room/)
+- [Open the Python compiler](https://evoltriet.github.io/drill-room/drill_room_compiler.html)
+
 ## Choose a Room
 
-- [`drill_room.html`](./drill_room.html) is the original dependency-free editor: syntax highlighting, timer, notes, and no code execution.
+- [`index.html`](./index.html) is the original dependency-free editor: syntax highlighting, timer, notes, and no code execution.
 - [`drill_room_compiler.html`](./drill_room_compiler.html) is a reusable Python + `unittest` runner. Its problem, description, solution, visible tests, and notes are all editable and saved locally.
 
 ## Features
@@ -19,9 +24,9 @@ Drill Room is a distraction-free workspace for practicing coding interviews. It 
 - Responsive layout for desktop and smaller screens
 - No build step, account, analytics, or backend
 
-## Use It
+## Download for Offline Use
 
-1. Download either [`drill_room.html`](./drill_room.html) or [`drill_room_compiler.html`](./drill_room_compiler.html).
+1. Download either [`index.html`](./index.html) or [`drill_room_compiler.html`](./drill_room_compiler.html).
 2. Open it in Chrome, Edge, Firefox, or Safari.
 3. Enter a problem name, choose a timer duration, and write your solution.
 
